@@ -1,11 +1,41 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
-val edgeRuntimeBaseUrl = providers.gradleProperty("edgeRuntimeBaseUrl")
-    .orElse("https://YOUR_PROJECT_REF.supabase.co/functions/v1")
-    .get()
+val localConfig = Properties().apply {
+    val configFile = rootProject.file("local.properties")
+    if (configFile.isFile) configFile.inputStream().use { load(it) }
+}
+fun localConfigValue(name: String, fallback: String): String =
+    localConfig.getProperty(name)?.takeIf { it.isNotBlank() } ?: fallback
+fun supabaseConfigValue(uppercaseName: String, legacyName: String, fallback: String): String =
+    localConfig.getProperty(uppercaseName)?.takeIf { it.isNotBlank() }
+        ?: localConfigValue(legacyName, fallback)
+fun buildConfigString(value: String): String =
+    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val supabaseUrl = supabaseConfigValue(
+    "SUPABASE_URL",
+    "supabase.url",
+    "https://YOUR_PROJECT_REF.supabase.co",
+)
+val supabaseAnonKey = supabaseConfigValue(
+    "SUPABASE_ANON_KEY",
+    "supabase.anonKey",
+    "YOUR_SUPABASE_ANON_KEY",
+)
+val edgeRuntimeBaseUrl = localConfigValue(
+    "edgeRuntimeBaseUrl",
+    "$supabaseUrl/functions/v1",
+)
+val tinyFishEndpoint = localConfigValue(
+    "tinyfish.endpoint",
+    "https://agent.tinyfish.ai/v1/automation/run-sse",
+)
+val tinyFishApiKey = localConfigValue("tinyfish.apiKey", "YOUR_TINYFISH_API_KEY")
 val useRemoteDeals = providers.gradleProperty("useRemoteDeals").orNull == "true"
 
 android {
@@ -21,8 +51,12 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // Replace YOUR_PROJECT_REF through the Gradle property explained in the codelab.
-        buildConfigField("String", "EDGE_RUNTIME_BASE_URL", "\"$edgeRuntimeBaseUrl\"")
+        // Values come from local.properties, which is excluded from version control.
+        buildConfigField("String", "SUPABASE_URL", buildConfigString(supabaseUrl))
+        buildConfigField("String", "SUPABASE_ANON_KEY", buildConfigString(supabaseAnonKey))
+        buildConfigField("String", "EDGE_RUNTIME_BASE_URL", buildConfigString(edgeRuntimeBaseUrl))
+        buildConfigField("String", "TINYFISH_ENDPOINT", buildConfigString(tinyFishEndpoint))
+        buildConfigField("String", "TINYFISH_API_KEY", buildConfigString(tinyFishApiKey))
         // Keep preview data by default. Enable the hosted function with:
         // -PuseRemoteDeals=true
         buildConfigField("boolean", "USE_REMOTE_DEALS", useRemoteDeals.toString())
@@ -58,6 +92,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.okhttp)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     testImplementation(libs.junit)
