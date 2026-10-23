@@ -40,7 +40,10 @@ val tinyFishApiKey = supabaseConfigValue(
     "tinyfish.apiKey",
     "YOUR_TINYFISH_API_KEY",
 )
-val useRemoteDeals = providers.gradleProperty("useRemoteDeals").orNull == "true"
+val useRemoteDeals = providers.gradleProperty("useRemoteDeals")
+    .map { it.toBoolean() }
+    .orElse(false)
+    .get()
 
 android {
     namespace = "com.apps.iatinyfish"
@@ -61,8 +64,7 @@ android {
         buildConfigField("String", "EDGE_RUNTIME_BASE_URL", buildConfigString(edgeRuntimeBaseUrl))
         buildConfigField("String", "TINYFISH_ENDPOINT", buildConfigString(tinyFishEndpoint))
         buildConfigField("String", "TINYFISH_API_KEY", buildConfigString(tinyFishApiKey))
-        // Keep preview data by default. Enable the hosted function with:
-        // -PuseRemoteDeals=true
+        // Local demo data is the default. Enable remote search explicitly with -PuseRemoteDeals=true.
         buildConfigField("boolean", "USE_REMOTE_DEALS", useRemoteDeals.toString())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

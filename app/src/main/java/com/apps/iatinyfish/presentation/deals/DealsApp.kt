@@ -35,6 +35,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -74,7 +75,11 @@ fun DealsApp(state: DealsUiState, onEvent: (DealsEvent) -> Unit) {
         label = "screen",
     ) { offer ->
         if (offer == null) DealsSearchScreen(state, onEvent)
-        else DealDetailScreen(offer, onBack = { onEvent(DealsEvent.Back) })
+        else DealDetailScreen(
+            offer = offer,
+            isPreviewData = state.isPreviewData,
+            onBack = { onEvent(DealsEvent.Back) },
+        )
     }
 }
 
@@ -121,13 +126,13 @@ private fun DealsSearchScreen(state: DealsUiState, onEvent: (DealsEvent) -> Unit
         if (state.hasSearched) {
             SearchResults(
                 offers = state.offers,
-                query = state.query,
+                query = state.searchedQuery,
                 isLoading = state.isLoading,
                 errorMessage = state.errorMessage,
                 isPreviewData = state.isPreviewData,
                 topPadding = padding.calculateTopPadding(),
                 onOpenOffer = { onEvent(DealsEvent.OpenOffer(it)) },
-                onRetry = { onEvent(DealsEvent.SubmitSearch) },
+                onRetry = { onEvent(DealsEvent.RetrySearch) },
             )
         } else {
             DiscoveryHome(
@@ -245,9 +250,15 @@ private fun SearchResults(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 3.dp)
+            Spacer(Modifier.height(20.dp))
             Text("Buscando ofertas…", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            Text("Consultando fuentes web.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                if (isPreviewData) "Preparando resultados de demostración para “$query”."
+                else "Consultando fuentes web para “$query”.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     } else if (offers.isEmpty()) {
         Column(
@@ -261,10 +272,21 @@ private fun SearchResults(
         ) {
             Text("◌", fontSize = 42.sp, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(12.dp))
-            Text(errorMessage ?: "No encontramos ofertas para “$query”", style = MaterialTheme.typography.titleMedium)
+            Text(
+                if (errorMessage == null) "No encontramos ofertas para “$query”" else "No se pudo completar la búsqueda",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
             Spacer(Modifier.height(8.dp))
-            Text(if (isPreviewData) "Prueba con Nintendo Switch OLED para recorrer la demo." else "Prueba con otro producto o vuelve a intentarlo.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            TextButton(onClick = onRetry) { Text("Reintentar") }
+            Text(
+                errorMessage ?: if (isPreviewData) {
+                    "Prueba con Nintendo Switch OLED para recorrer los datos de demostración."
+                } else {
+                    "Prueba con otro producto para encontrar más ofertas."
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (errorMessage != null) TextButton(onClick = onRetry) { Text("Reintentar") }
         }
     } else {
         LazyColumn(
@@ -326,7 +348,7 @@ private fun Tag(text: String, highlighted: Boolean) {
 }
 
 @Composable
-private fun DealDetailScreen(offer: ProductOffer, onBack: () -> Unit) {
+private fun DealDetailScreen(offer: ProductOffer, isPreviewData: Boolean, onBack: () -> Unit) {
     val context = LocalContext.current
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -341,6 +363,22 @@ private fun DealDetailScreen(offer: ProductOffer, onBack: () -> Unit) {
             Modifier.fillMaxSize().padding(padding).padding(20.dp).verticalScroll(rememberScrollState()),
         ) {
             Text(offer.store, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            if (isPreviewData) {
+                Spacer(Modifier.height(10.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = RoundedCornerShape(99.dp),
+                ) {
+                    Text(
+                        "DATOS DE DEMOSTRACIÓN",
+                        Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = .5.sp,
+                    )
+                }
+            }
             Spacer(Modifier.height(6.dp))
             Text(offer.productName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
             Spacer(Modifier.height(22.dp))

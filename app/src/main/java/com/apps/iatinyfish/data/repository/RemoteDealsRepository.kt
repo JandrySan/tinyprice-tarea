@@ -8,6 +8,7 @@ import com.apps.iatinyfish.data.remote.TinyPriceApi
 import com.apps.iatinyfish.data.remote.TinyPriceApiFactory
 import com.apps.iatinyfish.data.remote.toProductOffer
 import com.google.gson.Gson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Response
@@ -24,6 +25,8 @@ class RemoteDealsRepository(
             if (!response.isSuccessful) throw RemoteSearchException(response.errorMessage())
             response.body()?.offers.orEmpty().map { it.toProductOffer() }
         } catch (error: RemoteSearchException) {
+            throw error
+        } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
             throw RemoteSearchException(

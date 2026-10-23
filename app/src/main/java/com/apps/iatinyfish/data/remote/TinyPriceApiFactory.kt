@@ -8,6 +8,15 @@ import java.util.concurrent.TimeUnit
 
 object TinyPriceApiFactory {
     private val httpClient = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+            val anonKey = BuildConfig.SUPABASE_ANON_KEY
+            if (anonKey.isNotBlank() && !anonKey.startsWith("YOUR_")) {
+                request.header("apikey", anonKey)
+                request.header("Authorization", "Bearer $anonKey")
+            }
+            chain.proceed(request.build())
+        }
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
         .writeTimeout(20, TimeUnit.SECONDS)
