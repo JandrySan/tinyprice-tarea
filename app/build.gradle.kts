@@ -35,7 +35,11 @@ val tinyFishEndpoint = localConfigValue(
     "tinyfish.endpoint",
     "https://agent.tinyfish.ai/v1/automation/run-sse",
 )
-val tinyFishApiKey = localConfigValue("tinyfish.apiKey", "YOUR_TINYFISH_API_KEY")
+val tinyFishApiKey = supabaseConfigValue(
+    "TINYFISH_API_KEY",
+    "tinyfish.apiKey",
+    "YOUR_TINYFISH_API_KEY",
+)
 val useRemoteDeals = providers.gradleProperty("useRemoteDeals").orNull == "true"
 
 android {
