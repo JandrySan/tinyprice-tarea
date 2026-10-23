@@ -132,14 +132,21 @@ private fun DealsSearchScreen(state: DealsUiState, onEvent: (DealsEvent) -> Unit
         } else {
             DiscoveryHome(
                 topPadding = padding.calculateTopPadding(),
+                offers = state.offers,
                 onSuggestion = { onEvent(DealsEvent.UseSuggestion(it)) },
+                onOpenOffer = { onEvent(DealsEvent.OpenOffer(it)) },
             )
         }
     }
 }
 
 @Composable
-private fun DiscoveryHome(topPadding: androidx.compose.ui.unit.Dp, onSuggestion: (String) -> Unit) {
+private fun DiscoveryHome(
+    topPadding: androidx.compose.ui.unit.Dp,
+    offers: List<ProductOffer>,
+    onSuggestion: (String) -> Unit,
+    onOpenOffer: (ProductOffer) -> Unit,
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, top = topPadding + 8.dp, end = 20.dp, bottom = 28.dp),
@@ -159,6 +166,14 @@ private fun DiscoveryHome(topPadding: androidx.compose.ui.unit.Dp, onSuggestion:
                         )
                     }
                 }
+            }
+        }
+        if (offers.isNotEmpty()) {
+            item {
+                Text("Ofertas destacadas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            items(offers, key = ProductOffer::id) { offer ->
+                OfferCard(offer) { onOpenOffer(offer) }
             }
         }
         item { HowItWorksCard() }

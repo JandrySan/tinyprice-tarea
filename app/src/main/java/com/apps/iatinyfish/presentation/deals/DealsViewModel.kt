@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.apps.iatinyfish.data.model.ProductOffer
 import com.apps.iatinyfish.data.repository.DealsRepository
 import com.apps.iatinyfish.data.repository.DealsRepositoryProvider
+import com.apps.iatinyfish.data.repository.PreviewDealsRepository
 import com.apps.iatinyfish.data.repository.RemoteSearchException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
@@ -35,7 +36,12 @@ class DealsViewModel(
     private val repository: DealsRepository = DealsRepositoryProvider.create(),
 ) : ViewModel() {
     private var searchJob: Job? = null
-    private val _state = MutableStateFlow(DealsUiState(isPreviewData = repository.isPreviewData))
+    private val _state = MutableStateFlow(
+        DealsUiState(
+            offers = if (repository.isPreviewData) PreviewDealsRepository.featuredOffers else emptyList(),
+            isPreviewData = repository.isPreviewData,
+        ),
+    )
     val state: StateFlow<DealsUiState> = _state.asStateFlow()
 
     fun onEvent(event: DealsEvent) {

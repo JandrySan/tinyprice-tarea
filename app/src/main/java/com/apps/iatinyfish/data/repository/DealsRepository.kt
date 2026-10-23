@@ -11,7 +11,7 @@ interface DealsRepository {
 /** Temporary local data. The local Supabase runtime and TinyFish replace this source when enabled. */
 object PreviewDealsRepository : DealsRepository {
     override val isPreviewData: Boolean = true
-    private val offers = listOf(
+    val featuredOffers = listOf(
         ProductOffer(
             id = "pixel-store",
             store = "Pixel Store",
@@ -54,9 +54,9 @@ object PreviewDealsRepository : DealsRepository {
     )
 
     override suspend fun search(query: String): List<ProductOffer> {
-        if (query.isBlank()) return offers
+        if (query.isBlank()) return featuredOffers
         val terms = query.lowercase().split(" ").filter { it.isNotBlank() }
-        return offers.filter { offer ->
+        return featuredOffers.filter { offer ->
             val searchableText = "${offer.store} ${offer.productName} ${offer.summary} ${offer.tags.joinToString()}".lowercase()
             terms.any(searchableText::contains)
         }
