@@ -78,7 +78,7 @@ fun DealsApp(state: DealsUiState, onEvent: (DealsEvent) -> Unit) {
         else DealDetailScreen(
             offer = offer,
             isPreviewData = state.isPreviewData,
-            onBack = { onEvent(DealsEvent.Back) },
+            onNavigateBack = { onEvent(DealsEvent.Back) },
         )
     }
 }
@@ -348,13 +348,24 @@ private fun Tag(text: String, highlighted: Boolean) {
 }
 
 @Composable
-private fun DealDetailScreen(offer: ProductOffer, isPreviewData: Boolean, onBack: () -> Unit) {
+private fun DealDetailScreen(
+    offer: ProductOffer,
+    isPreviewData: Boolean,
+    onNavigateBack: () -> Unit,
+) {
     val context = LocalContext.current
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) { Text("‹  Volver", fontSize = 16.sp) }
+                TextButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier
+                        .testTag("back-to-offers")
+                        .semantics { contentDescription = "Volver al listado de ofertas" },
+                ) {
+                    Text("‹  Volver", fontSize = 16.sp)
+                }
                 Text("Detalle de oferta", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         },
